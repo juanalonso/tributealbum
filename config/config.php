@@ -1,0 +1,4 @@
+<?php 
+
+$clientId     = ''; 
+$clientSecret = ''; 
