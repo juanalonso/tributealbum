@@ -9,7 +9,7 @@ require 'vendor/autoload.php';
 
 
 $accessToken = getToken($clientId, $clientSecret);
-$albumTitle = "crisis en";
+$albumTitle = "l'imboscata";
 
 
 //----------------------------------------------------------
@@ -89,17 +89,29 @@ $albumInfo = getAlbumInfo($albumId, $accessToken);
 
 <?php
 echo "<img src='" . $albumInfo["images"]["1"]["url"] . "' width='300' height='300'/>\n";
-echo "<ul>";
+echo "<ol>";
+
+
 foreach ($albumInfo["tracks"]["items"] as $track) {
 
     $artistArray = array();
     foreach ($track["artists"] as $artist) {
-        $artistArray[] =  $artist["name"];
+        $artistArray[$artist["id"]] =  $artist["name"];
     }
 
-    echo "<li>" . $track["name"] ." (" . implode(", ", $artistArray) . ")</li>";
+    echo "<li>" . $track["name"];
+    echo "<ul>";
+    $tributeArray = getTrackList($track["name"], $accessToken, $artistArray);
+    //print_r($tributeArray);
+    foreach ($tributeArray as $tributeTrack) {
+        echo "<li><a href='" . $tributeTrack["url"] . "'>" . $tributeTrack["name"];
+        echo "</a></li>";
+    }
+    echo "</ul>";
+    echo "</li>";
+
 }
-echo "</ul>";
+echo "</ol>";
 ?>
     </body>
 </html>
@@ -143,7 +155,7 @@ function getAlbumList($albumTitle, $accessToken) {
     $result=curl_exec($ch);
     $json = json_decode($result, true);
 
-    //print_r($json);
+    print_r($json);
 
     return $json;
 
@@ -166,5 +178,42 @@ function getAlbumInfo($albumId, $accessToken) {
     //print_r($json);
 
     return $json;
+
+}
+
+function getTrackList($trackTitle, $accessToken, $artistArray) {
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, 'https://api.spotify.com/v1/search?q='.urlencode("track:\"$trackTitle\"").'&type=track');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1 );
+    curl_setopt($ch, CURLOPT_HTTPHEADER,
+                  array('Accept: application/json', 
+                        'Content-Type: application/json', 
+                        'Authorization: Bearer '.$accessToken)); 
+
+    $result=curl_exec($ch);
+    $json = json_decode($result, true);
+
+    $trackList = array();
+
+    foreach ($json["tracks"]["items"] as $key => $track) {
+
+        $artistList = array();
+        foreach ($track["artists"] as $artist) {
+            $artistList[$artist["id"]] = $artist["name"];
+        }
+
+        if (implode("-", array_keys($artistArray)) == implode("-", array_keys($artistList))) {
+            continue;
+        }
+
+        $trackList[$key]["artists"] = $artistList;
+        $trackList[$key]["url"] = $track["external_urls"]["spotify"];
+        $trackList[$key]["name"] = $track["name"];
+    }
+
+    //print_r($trackList);
+
+    return $trackList;
 
 }
