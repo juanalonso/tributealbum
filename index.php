@@ -7,9 +7,13 @@ include("config/config.php");
 //http://altorouter.com/
 require 'vendor/autoload.php';
 
+$regexpPatterns = array(
+    "/ - Remastered$/",
+    "/ - [0-9]{4} Remaster$/",
+);
 
 $accessToken = getToken($clientId, $clientSecret);
-$albumTitle = "l'imboscata";
+$albumTitle = "cinghiale";
 
 
 //----------------------------------------------------------
@@ -145,7 +149,7 @@ function getToken($clientId, $clientSecret){
 function getAlbumList($albumTitle, $accessToken) {
 
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, 'https://api.spotify.com/v1/search?q='.urlencode("album:\"$albumTitle\"").'&type=album');
+    curl_setopt($ch, CURLOPT_URL, 'https://api.spotify.com/v1/search?q='.urlencode("album:$albumTitle").'&type=album&market=ES');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1 );
     curl_setopt($ch, CURLOPT_HTTPHEADER,
                   array('Accept: application/json', 
@@ -155,7 +159,7 @@ function getAlbumList($albumTitle, $accessToken) {
     $result=curl_exec($ch);
     $json = json_decode($result, true);
 
-    print_r($json);
+    //print_r($json);
 
     return $json;
 
@@ -182,6 +186,11 @@ function getAlbumInfo($albumId, $accessToken) {
 }
 
 function getTrackList($trackTitle, $accessToken, $artistArray) {
+
+    global $regexpPatterns;
+
+    $trackTitle = preg_replace($regexpPatterns, "", $trackTitle);
+    //echo "-- $trackTitle --";
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, 'https://api.spotify.com/v1/search?q='.urlencode("track:\"$trackTitle\"").'&type=track');
