@@ -93,7 +93,7 @@ $albumInfo = getAlbumInfo($albumId, $accessToken);
 
 <?php
 echo "<img src='" . $albumInfo["images"]["1"]["url"] . "' width='300' height='300'/>\n";
-echo "<ol>";
+echo "<ol>\n";
 
 
 foreach ($albumInfo["tracks"]["items"] as $track) {
@@ -103,19 +103,19 @@ foreach ($albumInfo["tracks"]["items"] as $track) {
         $artistArray[$artist["id"]] =  $artist["name"];
     }
 
-    echo "<li>" . $track["name"];
-    echo "<ul>";
+    echo "  <li>" . $track["name"] . "\n";
+    echo "    <ul>\n";
     $tributeArray = getTrackList($track["name"], $accessToken, $artistArray);
     //print_r($tributeArray);
     foreach ($tributeArray as $tributeTrack) {
-        echo "<li><a href='" . $tributeTrack["url"] . "'>" . $tributeTrack["name"];
-        echo "</a> (".implode(", ", array_values($tributeTrack["artists"])).")</li>";
+        echo "      <li><a href='" . $tributeTrack["url"] . "'>" . $tributeTrack["name"];
+        echo "</a> (".implode(", ", array_values($tributeTrack["artists"])).")</li>\n";
     }
-    echo "</ul>";
-    echo "</li>";
+    echo "    </ul>\n";
+    echo "  </li>\n";
 
 }
-echo "</ol>";
+echo "</ol>\n";
 ?>
     </body>
 </html>
@@ -149,7 +149,7 @@ function getToken($clientId, $clientSecret){
 function getAlbumList($albumTitle, $accessToken) {
 
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, 'https://api.spotify.com/v1/search?q='.urlencode("album:$albumTitle").'&type=album&market=ES');
+    curl_setopt($ch, CURLOPT_URL, 'https://api.spotify.com/v1/search?q='.urlencode("album:$albumTitle").'&type=album&market=ES&limit=50');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1 );
     curl_setopt($ch, CURLOPT_HTTPHEADER,
                   array('Accept: application/json', 
@@ -193,7 +193,7 @@ function getTrackList($trackTitle, $accessToken, $artistArray) {
     //echo "-- $trackTitle --";
 
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, 'https://api.spotify.com/v1/search?q='.urlencode("track:\"$trackTitle\"").'&type=track');
+    curl_setopt($ch, CURLOPT_URL, 'https://api.spotify.com/v1/search?q='.urlencode("track:\"$trackTitle\"").'&type=track&limit=50');
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1 );
     curl_setopt($ch, CURLOPT_HTTPHEADER,
                   array('Accept: application/json', 
@@ -205,6 +205,11 @@ function getTrackList($trackTitle, $accessToken, $artistArray) {
 
     $trackList = array();
 
+    if (isset($json["tracks"]["next"])) {
+        echo "HAY QUE PAGINAR";
+    }
+
+
     foreach ($json["tracks"]["items"] as $key => $track) {
 
         $artistList = array();
@@ -213,6 +218,10 @@ function getTrackList($trackTitle, $accessToken, $artistArray) {
         }
 
         if (implode("-", array_keys($artistArray)) == implode("-", array_keys($artistList))) {
+            continue;
+        }
+
+        if (strtolower(substr($track["name"], 0, strlen($trackTitle)))!==strtolower($trackTitle)) {
             continue;
         }
 
