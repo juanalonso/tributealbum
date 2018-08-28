@@ -13,7 +13,7 @@ $regexpPatterns = array(
 );
 
 $accessToken = getToken($clientId, $clientSecret);
-$albumTitle = "cinghiale";
+$albumTitle = "songs of leonard";
 
 
 //----------------------------------------------------------
@@ -109,7 +109,7 @@ foreach ($albumInfo["tracks"]["items"] as $track) {
     //print_r($tributeArray);
     foreach ($tributeArray as $tributeTrack) {
         echo "<li><a href='" . $tributeTrack["url"] . "'>" . $tributeTrack["name"];
-        echo "</a></li>";
+        echo "</a> (".implode(", ", array_values($tributeTrack["artists"])).")</li>";
     }
     echo "</ul>";
     echo "</li>";
