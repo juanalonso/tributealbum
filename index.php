@@ -10,10 +10,12 @@ require 'vendor/autoload.php';
 $regexpPatterns = array(
     "/ - Remastered$/",
     "/ - [0-9]{4} Remaster$/",
+    "/ - [0-9]{4} Digital Remastered.*$/",
+    "/ - Live [0-9]{4}$/",
 );
 
 $accessToken = getToken($clientId, $clientSecret);
-$albumTitle = "songs of leonard";
+$albumTitle = "last summer dance";
 
 
 //----------------------------------------------------------
@@ -148,42 +150,21 @@ function getToken($clientId, $clientSecret){
 
 function getAlbumList($albumTitle, $accessToken) {
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, 'https://api.spotify.com/v1/search?q='.urlencode("album:$albumTitle").'&type=album&market=ES&limit=50');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1 );
-    curl_setopt($ch, CURLOPT_HTTPHEADER,
-                  array('Accept: application/json', 
-                        'Content-Type: application/json', 
-                        'Authorization: Bearer '.$accessToken)); 
+    $apiEndpoint = "https://api.spotify.com/v1/search?q=".urlencode("album:$albumTitle")."&type=album&market=ES&limit=50";
 
-    $result=curl_exec($ch);
-    $json = json_decode($result, true);
-
-    //print_r($json);
-
-    return $json;
+    return curlCall($apiEndpoint, $accessToken);
 
 }
 
 
 function getAlbumInfo($albumId, $accessToken) {
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, 'https://api.spotify.com/v1/albums/' . $albumId);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1 );
-    curl_setopt($ch, CURLOPT_HTTPHEADER,
-                  array('Accept: application/json', 
-                        'Content-Type: application/json', 
-                        'Authorization: Bearer '.$accessToken)); 
-
-    $result=curl_exec($ch);
-    $json = json_decode($result, true);
-
-    //print_r($json);
-
-    return $json;
+    $apiEndpoint = "https://api.spotify.com/v1/albums/" . $albumId;
+    
+    return curlCall($apiEndpoint, $accessToken);
 
 }
+
 
 function getTrackList($trackTitle, $accessToken, $artistArray) {
 
@@ -192,25 +173,24 @@ function getTrackList($trackTitle, $accessToken, $artistArray) {
     $trackTitle = preg_replace($regexpPatterns, "", $trackTitle);
     //echo "-- $trackTitle --";
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, 'https://api.spotify.com/v1/search?q='.urlencode("track:\"$trackTitle\"").'&type=track&limit=50');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1 );
-    curl_setopt($ch, CURLOPT_HTTPHEADER,
-                  array('Accept: application/json', 
-                        'Content-Type: application/json', 
-                        'Authorization: Bearer '.$accessToken)); 
+    $apiEndpoint = "https://api.spotify.com/v1/search?q=".urlencode("track:$trackTitle")."&type=track&limit=50";
 
-    $result=curl_exec($ch);
-    $json = json_decode($result, true);
+    $results = array();
+
+    do {
+
+        $json = curlCall($apiEndpoint, $accessToken);
+        $counter++;
+        $apiEndpoint = $json["tracks"]["next"];
+        $results = array_merge($results, $json["tracks"]["items"]);
+    
+    } while (isset($json["tracks"]["next"]));
+
+    //print_r($results);
 
     $trackList = array();
 
-    if (isset($json["tracks"]["next"])) {
-        echo "HAY QUE PAGINAR";
-    }
-
-
-    foreach ($json["tracks"]["items"] as $key => $track) {
+    foreach ($results as $key => $track) {
 
         $artistList = array();
         foreach ($track["artists"] as $artist) {
@@ -233,5 +213,24 @@ function getTrackList($trackTitle, $accessToken, $artistArray) {
     //print_r($trackList);
 
     return $trackList;
+
+}
+
+function curlCall($apiEndpoint, $accessToken){
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $apiEndpoint);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1 );
+    curl_setopt($ch, CURLOPT_HTTPHEADER,
+                  array('Accept: application/json', 
+                        'Content-Type: application/json', 
+                        'Authorization: Bearer '.$accessToken)); 
+
+    $result=curl_exec($ch);
+    $json = json_decode($result, true);
+
+    //print_r($json);
+
+    return $json;
 
 }
