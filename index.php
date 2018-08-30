@@ -49,24 +49,41 @@ $albumList = getAlbumList($albumTitle, $accessToken);
 <html>
     <head>
         <title>TributeAlbum</title>
+        <link rel="stylesheet" href="https://unpkg.com/spectre.css/dist/spectre.min.css">
     </head>
     <body>
+
+
         <h1>TributeAlbum</h1>
         <h2><?= $albumTitle ?></h2>
+        <div class="container" id="cards">
+        <div class="columns">
 
 <?php
 foreach ($albumList["albums"]["items"] as $album) {
-
     $artistArray = array();
     foreach ($album["artists"] as $artist) {
         $artistArray[] =  $artist["name"];
     }
 
-    echo "<img src='" . $album["images"]["1"]["url"] . "' width='300' height='300'/><br/>\n";
-    echo "<a href='/album/" . $album["id"] . "'>" . $album["name"] ."</a><br/>\n";
-    echo implode(", ", $artistArray) . "<hr/>\n\n";
+
+?>
+<div class="column col-2">
+    <div class="card">
+      <div class="card-image">
+        <img src="<?= $album["images"]["1"]["url"] ?>" class="img-responsive">
+      </div>
+      <div class="card-header">
+        <div class="card-title h5"><a href='/album/<?= $album["id"] ?>'><?=$album["name"] ?></a></div>
+        <div class="card-subtitle text-gray"><?= implode(", ", $artistArray) ?></div>
+      </div>
+    </div>
+  </div>
+<?php
 }
 ?>
+    </div>
+    </div>
 
     </body>
 </html>
